@@ -304,7 +304,7 @@ const RetroTypingShooter = () => {
             japanese: sentence.text,
             x: canvas.width / 2,
             y: -30,
-            speed: 0.008 + stage * 0.005,
+            speed: 0.006 + stage * 0.005,
             typed: ''
           };
           setEnemies(prev => [...prev, newEnemy]);
@@ -334,7 +334,7 @@ const RetroTypingShooter = () => {
         ctx.fillStyle = '#444';
         for (let i = 0; i < 100; i++) {
           const x = (i * 79) % canvas.width;
-          const y = ((i * 113) + gameTimeRef.current * 0.075) % canvas.height;
+          const y = ((i * 113) + gameTimeRef.current * 0.050) % canvas.height;
           const size = (i % 3) + 1;
           ctx.fillRect(x, y, size, size);
         }
