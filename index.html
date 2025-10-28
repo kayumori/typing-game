@@ -13,19 +13,19 @@
     <div id="root"></div>
     <script type="text/babel">
 const RetroTypingShooter = () => {
-  const [gameState, setGameState] = useState('menu');
-  const [mode, setMode] = useState('normal');
-  const [score, setScore] = useState(0);
-  const [stage, setStage] = useState(1);
-  const [defeatedCount, setDefeatedCount] = useState(0);
-  const [enemies, setEnemies] = useState([]);
-  const [missedWord, setMissedWord] = useState(null);
-  const canvasRef = useRef(null);
-  const animationRef = useRef(null);
-  const gameTimeRef = useRef(0);
-  const audioContextRef = useRef(null);
-  const bgmIntervalRef = useRef(null);
-  const bgmOscillatorsRef = useRef([]);
+  const [gameState, setGameState] = React.useState('menu');
+  const [mode, setMode] = React.useState('normal');
+  const [score, setScore] = React.useState(0);
+  const [stage, setStage] = React.useState(1);
+  const [defeatedCount, setDefeatedCount] = React.useState(0);
+  const [enemies, setEnemies] = React.useState([]);
+  const [missedWord, setMissedWord] = React.useState(null);
+  const canvasRef = React.useRef(null);
+  const animationRef = React.useRef(null);
+  const gameTimeRef = React.useRef(0);
+  const audioContextRef = React.useRef(null);
+  const bgmIntervalRef = React.useRef(null);
+  const bgmOscillatorsRef = React.useRef([]);
 
   const allSentences = [
     { text: 'おはよう', romaji: 'OHAYOU' },
@@ -168,11 +168,10 @@ const RetroTypingShooter = () => {
   };
 
   const startBGM = () => {
-    stopBGM(); // 既存のBGMを停止
+    stopBGM();
     try {
       const ctx = getAudioContext();
       
-      // レトロRPG風のメロディパターン
       const melodyPattern = [
         523.25, 587.33, 659.25, 587.33, 523.25, 493.88, 523.25, 587.33,
         659.25, 698.46, 659.25, 587.33, 523.25, 493.88, 523.25, 440.00
@@ -181,7 +180,6 @@ const RetroTypingShooter = () => {
       let currentNoteIndex = 0;
       
       const playBGMNote = () => {
-        // 古い音を停止
         bgmOscillatorsRef.current.forEach(osc => {
           try {
             osc.stop();
@@ -191,7 +189,6 @@ const RetroTypingShooter = () => {
         
         const freq = melodyPattern[currentNoteIndex % melodyPattern.length];
         
-        // メイン音
         const osc1 = ctx.createOscillator();
         const gain1 = ctx.createGain();
         osc1.type = 'triangle';
@@ -202,7 +199,6 @@ const RetroTypingShooter = () => {
         osc1.start();
         osc1.stop(ctx.currentTime + 0.4);
         
-        // ハーモニー（オクターブ下）
         const osc2 = ctx.createOscillator();
         const gain2 = ctx.createGain();
         osc2.type = 'sine';
@@ -286,9 +282,8 @@ const RetroTypingShooter = () => {
     });
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (gameState === 'playing') {
-      // ゲーム開始時にBGMを開始
       const startDelay = setTimeout(() => {
         startBGM();
       }, 100);
@@ -367,12 +362,10 @@ const RetroTypingShooter = () => {
 
           drawDotText(ctx, enemy.japanese, enemy.x, enemy.y + 45, 20, '#ffffff');
 
-          // ローマ字全体を1つの文字列として表示し、色分けする
           ctx.fillStyle = '#000';
           ctx.font = `bold 14px "Courier New", monospace`;
           ctx.textAlign = 'center';
           
-          // 影を描画
           for (let dx = -1; dx <= 1; dx++) {
             for (let dy = -1; dy <= 1; dy++) {
               if (dx !== 0 || dy !== 0) {
@@ -381,7 +374,6 @@ const RetroTypingShooter = () => {
             }
           }
           
-          // タイプ済み部分（緑）
           if (enemy.typed) {
             ctx.fillStyle = '#00ff00';
             ctx.textAlign = 'left';
@@ -389,7 +381,6 @@ const RetroTypingShooter = () => {
             ctx.fillText(enemy.typed, enemy.x - fullWidth / 2, enemy.y - 30);
           }
           
-          // 未タイプ部分（白）
           const remaining = enemy.word.substring(enemy.typed.length);
           if (remaining) {
             ctx.fillStyle = '#ffffff';
@@ -463,7 +454,7 @@ const RetroTypingShooter = () => {
     }
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [gameState, enemies, mode, defeatedCount, stage]);
@@ -571,7 +562,7 @@ const RetroTypingShooter = () => {
   );
 };
 
-export default RetroTypingShooter;
+ReactDOM.render(<RetroTypingShooter />, document.getElementById('root'));
     </script>
 </body>
 </html>
