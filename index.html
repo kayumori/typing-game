@@ -12,7 +12,566 @@
 <body>
     <div id="root"></div>
     <script type="text/babel">
-        // ここに下のReactコードを貼り付ける
+const RetroTypingShooter = () => {
+  const [gameState, setGameState] = useState('menu');
+  const [mode, setMode] = useState('normal');
+  const [score, setScore] = useState(0);
+  const [stage, setStage] = useState(1);
+  const [defeatedCount, setDefeatedCount] = useState(0);
+  const [enemies, setEnemies] = useState([]);
+  const [missedWord, setMissedWord] = useState(null);
+  const canvasRef = useRef(null);
+  const animationRef = useRef(null);
+  const gameTimeRef = useRef(0);
+  const audioContextRef = useRef(null);
+  const bgmIntervalRef = useRef(null);
+  const bgmOscillatorsRef = useRef([]);
+
+  const allSentences = [
+    { text: 'おはよう', romaji: 'OHAYOU' },
+    { text: 'こんにちは', romaji: 'KONNNITIHA' },
+    { text: 'こんばんは', romaji: 'KONNBANNHA' },
+    { text: 'ありがとう', romaji: 'ARIGATOU' },
+    { text: 'ごめんなさい', romaji: 'GOMENNNASAI' },
+    { text: 'すみません', romaji: 'SUMIMASENN' },
+    { text: 'いただきます', romaji: 'ITADAKIMASU' },
+    { text: 'ごちそうさま', romaji: 'GOTISOUSAMA' },
+    { text: 'ただいま', romaji: 'TADAIMA' },
+    { text: 'おかえり', romaji: 'OKAERI' },
+    { text: '今日はいい天気ですね', romaji: 'KYOUHAIITENNKIDESUNE' },
+    { text: 'お元気ですか', romaji: 'OGENNKIDESUKA' },
+    { text: 'はじめまして', romaji: 'HAJIMEMASITE' },
+    { text: 'よろしくお願いします', romaji: 'YOROSIKUONEGAISIMASU' },
+    { text: 'お疲れ様です', romaji: 'OTUKARESAMADESU' },
+    { text: 'いってきます', romaji: 'ITTEKIMASU' },
+    { text: 'いってらっしゃい', romaji: 'ITTERASSYAI' },
+    { text: 'おやすみなさい', romaji: 'OYASUMINASAI' },
+    { text: 'お誕生日おめでとう', romaji: 'OTANNJYOUBIOMEDETOU' },
+    { text: 'がんばって', romaji: 'GANNBATTE' },
+    { text: 'お大事に', romaji: 'ODAIJINI' },
+    { text: '失礼します', romaji: 'SITUREISIMASU' },
+    { text: 'どういたしまして', romaji: 'DOUITASIMASITE' },
+    { text: 'お待たせしました', romaji: 'OMATASESIMASITA' },
+    { text: '申し訳ございません', romaji: 'MOUSIWAKEGOZAIMASENN' },
+    { text: '了解しました', romaji: 'RYOUKAISIMASITA' },
+    { text: '承知しました', romaji: 'SYOUTISIMASITA' },
+    { text: '確認します', romaji: 'KAKUNINNSIMASU' },
+    { text: 'お先に失礼します', romaji: 'OSAKINISITUREISIMASU' },
+    { text: '今日も一日頑張りましょう', romaji: 'KYOUMOITINITIGANNBARIMASYOU' },
+    { text: 'いい天気ですね', romaji: 'IITENNKIDESUNE' },
+    { text: 'お久しぶりです', romaji: 'OHISASIBURIDESU' },
+    { text: 'また会いましょう', romaji: 'MATAAIMASYOU' },
+    { text: 'お気をつけて', romaji: 'OKIWOTUKETE' },
+    { text: 'ご無沙汰しております', romaji: 'GOBUSATASITEORIMASU' },
+    { text: '楽しみにしています', romaji: 'TANOSIMINISITEIMASU' },
+    { text: 'どうぞお入りください', romaji: 'DOUZOOHAIRIKUDASAI' },
+    { text: 'かしこまりました', romaji: 'KASIKOMARIMASITA' },
+    { text: 'お手数おかけします', romaji: 'OTESUUOKAKESIMASU' },
+    { text: 'ご連絡ありがとうございます', romaji: 'GORENNRAKUARIGATOUGOZAIMASU' },
+    { text: '素敵な一日を', romaji: 'SUTEKINAITINITIWO' },
+    { text: '頑張ってください', romaji: 'GANNBATTEKUDASAI' },
+    { text: 'お会いできて嬉しいです', romaji: 'OAIDEKITEURESIIDESU' },
+    { text: 'ありがとうございました', romaji: 'ARIGATOGOZAIMASITA' },
+    { text: 'どうもありがとう', romaji: 'DOUMOARIGATOU' },
+    { text: 'とても美味しいです', romaji: 'TOTEMOOISIIDESU' },
+    { text: 'お腹が空きました', romaji: 'ONAKAGASUKIMASITA' },
+    { text: 'お水をください', romaji: 'OMIZUOWOKUDASAI' },
+    { text: 'お会計お願いします', romaji: 'OKAIKEIONEGAISIMASU' },
+    { text: 'お時間ありますか', romaji: 'OJIKANNARIMASUKA' },
+    { text: 'もう一度お願いします', romaji: 'MOUITIDOONEGAISIMASU' },
+    { text: '少々お待ちください', romaji: 'SYOUSYOUOMATIKUDASAI' },
+    { text: '本当にありがとう', romaji: 'HONTOUNIARIGATOU' },
+    { text: '大変申し訳ありません', romaji: 'TAIHENNMOUSIWAKEARIMASENN' },
+    { text: 'よくわかりません', romaji: 'YOKUWAKARIMASEN' },
+    { text: 'もう少しゆっくりお願いします', romaji: 'MOUSUKOSIYUKKURIONEGAISIMASU' },
+    { text: '素晴らしいですね', romaji: 'SUBARASIIDESUNE' },
+    { text: 'それは面白いですね', romaji: 'SOREHAOMOSIROIDESUNE' },
+    { text: 'とても楽しかったです', romaji: 'TOTEMOTANOSIKATTADESU' },
+    { text: 'また来ます', romaji: 'MATAKIMASU' },
+    { text: 'お見舞い申し上げます', romaji: 'OMIMAIMOUSIAGEMASU' },
+    { text: 'お体に気をつけて', romaji: 'OKARADANIKIWOTUKETE' },
+    { text: 'どうぞご自愛ください', romaji: 'DOUZOGOZIAIKUDASAI' },
+    { text: '心よりお祈りしています', romaji: 'KOKOROYORIOINORISITEIMASU' },
+    { text: 'お仕事頑張ってください', romaji: 'OSIGOTOGANBATTEKUDASAI' },
+    { text: '応援しています', romaji: 'OUENNSITEIMASU' },
+    { text: '成功をお祈りします', romaji: 'SEIKOUWOOINORISIMASU' },
+    { text: 'いつもありがとうございます', romaji: 'ITUMOARIGATOUGOZAIMASU' },
+    { text: 'お陰様で元気です', romaji: 'OKAGESAMADEGENNKIDESU' },
+    { text: '順調に進んでいます', romaji: 'JUNTYOUNISUSUNDEIMASU' },
+    { text: 'お力添えありがとうございます', romaji: 'OTIKARAZOEARIGATOUGOZAIMASU' },
+    { text: 'ご協力感謝します', romaji: 'GOKYOURYOKUKANSYASIMASU' },
+    { text: 'また機会がありましたら', romaji: 'MATAKIKAIGARIMASITARA' },
+    { text: 'これからもよろしく', romaji: 'KOREKARAMOYOROSIKU' },
+    { text: '今後ともよろしくお願いします', romaji: 'KONGOTOMOYOROSIKUONEGAISIMASU' },
+    { text: 'お世話になりました', romaji: 'OSEWANINARIMASITA' },
+    { text: 'お世話になっております', romaji: 'OSEWANINATTEORIMASU' },
+    { text: 'お忙しいところすみません', romaji: 'OISOGASIITOKOROSUMIMASEN' },
+    { text: 'お時間をいただきありがとうございます', romaji: 'OJIKANWOITADAKIARIGATOUGOZAIMASU' },
+    { text: 'ご都合はいかがですか', romaji: 'GOTUGOUHAIKAGADESUKA' },
+    { text: 'ご検討よろしくお願いします', romaji: 'GOKENTOUYOROSIKUONEGAISIMASU' },
+    { text: 'ご理解いただけますと幸いです', romaji: 'GORIKAIITADAKEMASUTOSAIWAIDESU' },
+    { text: 'お返事お待ちしております', romaji: 'OHENNJIOMATISITEORIMASU' },
+    { text: '取り急ぎご連絡まで', romaji: 'TORIISOGIGORENNRAKUMADE' }
+  ];
+
+  const getAudioContext = () => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return audioContextRef.current;
+  };
+
+  const playSound = (frequency, duration, type = 'square') => {
+    try {
+      const ctx = getAudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = type;
+      osc.frequency.value = frequency;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      gain.gain.value = 0.1;
+      
+      osc.start();
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+      osc.stop(ctx.currentTime + duration);
+    } catch (e) {
+      console.log('Audio error:', e);
+    }
+  };
+
+  const playMenuSelectSound = () => {
+    playSound(880, 0.1);
+  };
+
+  const playTypeSound = () => {
+    playSound(1200, 0.05);
+  };
+
+  const playDefeatSound = () => {
+    playSound(440, 0.1);
+    setTimeout(() => playSound(880, 0.1), 100);
+    setTimeout(() => playSound(1320, 0.2), 200);
+  };
+
+  const playGameOverSound = () => {
+    playSound(400, 0.2);
+    setTimeout(() => playSound(350, 0.2), 200);
+    setTimeout(() => playSound(300, 0.3), 400);
+  };
+
+  const playStageUpSound = () => {
+    playSound(523, 0.1);
+    setTimeout(() => playSound(659, 0.1), 100);
+    setTimeout(() => playSound(784, 0.2), 200);
+  };
+
+  const startBGM = () => {
+    stopBGM(); // 既存のBGMを停止
+    try {
+      const ctx = getAudioContext();
+      
+      // レトロRPG風のメロディパターン
+      const melodyPattern = [
+        523.25, 587.33, 659.25, 587.33, 523.25, 493.88, 523.25, 587.33,
+        659.25, 698.46, 659.25, 587.33, 523.25, 493.88, 523.25, 440.00
+      ];
+      
+      let currentNoteIndex = 0;
+      
+      const playBGMNote = () => {
+        // 古い音を停止
+        bgmOscillatorsRef.current.forEach(osc => {
+          try {
+            osc.stop();
+          } catch(e) {}
+        });
+        bgmOscillatorsRef.current = [];
+        
+        const freq = melodyPattern[currentNoteIndex % melodyPattern.length];
+        
+        // メイン音
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'triangle';
+        osc1.frequency.value = freq;
+        gain1.gain.value = 0.01;
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start();
+        osc1.stop(ctx.currentTime + 0.4);
+        
+        // ハーモニー（オクターブ下）
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.value = freq * 0.5;
+        gain2.gain.value = 0.008;
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start();
+        osc2.stop(ctx.currentTime + 0.4);
+        
+        bgmOscillatorsRef.current.push(osc1, osc2);
+        
+        currentNoteIndex++;
+      };
+      
+      playBGMNote();
+      bgmIntervalRef.current = setInterval(playBGMNote, 350);
+    } catch (e) {
+      console.log('BGM error:', e);
+    }
+  };
+
+  const stopBGM = () => {
+    if (bgmIntervalRef.current) {
+      clearInterval(bgmIntervalRef.current);
+      bgmIntervalRef.current = null;
+    }
+    bgmOscillatorsRef.current.forEach(osc => {
+      try {
+        osc.stop();
+      } catch(e) {}
+    });
+    bgmOscillatorsRef.current = [];
+  };
+
+  const getSentencesForStage = (stageNum) => {
+    const length = Math.min(15 + stageNum * 3, 40);
+    return allSentences.filter(s => s.text.length <= length);
+  };
+
+  const drawDotText = (ctx, text, x, y, size, color) => {
+    ctx.fillStyle = color;
+    ctx.font = `bold ${size}px "Courier New", monospace`;
+    ctx.textAlign = 'center';
+    
+    ctx.fillStyle = '#000';
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        if (dx !== 0 || dy !== 0) {
+          ctx.fillText(text, x + dx, y + dy);
+        }
+      }
+    }
+    
+    ctx.fillStyle = color;
+    ctx.fillText(text, x, y);
+  };
+
+  const drawEnemyShip = (ctx, x, y) => {
+    const pixelSize = 5;
+    const pattern = [
+      [1,0,1,0,1],
+      [0,1,1,1,0],
+      [1,1,1,1,1],
+      [0,1,1,1,0],
+      [0,0,1,0,0]
+    ];
+    
+    ctx.fillStyle = '#ff0000';
+    pattern.forEach((row, dy) => {
+      row.forEach((pixel, dx) => {
+        if (pixel) {
+          ctx.fillRect(
+            x + (dx - 2) * pixelSize,
+            y + (dy - 2) * pixelSize,
+            pixelSize,
+            pixelSize
+          );
+        }
+      });
+    });
+  };
+
+  useEffect(() => {
+    if (gameState === 'playing') {
+      // ゲーム開始時にBGMを開始
+      const startDelay = setTimeout(() => {
+        startBGM();
+      }, 100);
+      
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      
+      const gameLoop = () => {
+        gameTimeRef.current += 1;
+        
+        const spawnInterval = Math.max(300, 500 - stage * 20);
+        if (gameTimeRef.current % spawnInterval === 0 && enemies.length === 0) {
+          const availableSentences = getSentencesForStage(stage);
+          const sentence = availableSentences[Math.floor(Math.random() * availableSentences.length)];
+          const newEnemy = {
+            id: Date.now(),
+            word: sentence.romaji,
+            japanese: sentence.text,
+            x: canvas.width / 2,
+            y: -30,
+            speed: 0.05 + stage * 0.005,
+            typed: ''
+          };
+          setEnemies(prev => [...prev, newEnemy]);
+        }
+
+        setEnemies(prev => {
+          const updated = prev.map(enemy => ({
+            ...enemy,
+            y: enemy.y + enemy.speed
+          }));
+
+          const collision = updated.some(enemy => enemy.y > canvas.height - 50);
+
+          if (collision) {
+            stopBGM();
+            playGameOverSound();
+            setGameState('gameover');
+            return [];
+          }
+
+          return updated.filter(enemy => enemy.y < canvas.height);
+        });
+
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#444';
+        for (let i = 0; i < 100; i++) {
+          const x = (i * 79) % canvas.width;
+          const y = ((i * 113) + gameTimeRef.current * 0.15) % canvas.height;
+          const size = (i % 3) + 1;
+          ctx.fillRect(x, y, size, size);
+        }
+
+        ctx.strokeStyle = '#0a0a0a';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < canvas.width; i += 50) {
+          ctx.beginPath();
+          ctx.moveTo(i, 0);
+          ctx.lineTo(i, canvas.height);
+          ctx.stroke();
+        }
+
+        ctx.strokeStyle = '#00ff00';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([10, 5]);
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height - 50);
+        ctx.lineTo(canvas.width, canvas.height - 50);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        enemies.forEach(enemy => {
+          drawEnemyShip(ctx, enemy.x, enemy.y);
+
+          drawDotText(ctx, enemy.japanese, enemy.x, enemy.y + 45, 20, '#ffffff');
+
+          // ローマ字全体を1つの文字列として表示し、色分けする
+          ctx.fillStyle = '#000';
+          ctx.font = `bold 14px "Courier New", monospace`;
+          ctx.textAlign = 'center';
+          
+          // 影を描画
+          for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+              if (dx !== 0 || dy !== 0) {
+                ctx.fillText(enemy.word, enemy.x + dx, enemy.y - 30 + dy);
+              }
+            }
+          }
+          
+          // タイプ済み部分（緑）
+          if (enemy.typed) {
+            ctx.fillStyle = '#00ff00';
+            ctx.textAlign = 'left';
+            const fullWidth = ctx.measureText(enemy.word).width;
+            ctx.fillText(enemy.typed, enemy.x - fullWidth / 2, enemy.y - 30);
+          }
+          
+          // 未タイプ部分（白）
+          const remaining = enemy.word.substring(enemy.typed.length);
+          if (remaining) {
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'left';
+            const typedWidth = enemy.typed ? ctx.measureText(enemy.typed).width : 0;
+            const fullWidth = ctx.measureText(enemy.word).width;
+            ctx.fillText(remaining, enemy.x - fullWidth / 2 + typedWidth, enemy.y - 30);
+          }
+        });
+
+        ctx.fillStyle = '#001100';
+        ctx.fillRect(10, 10, 180, 55);
+        ctx.strokeStyle = '#00ff00';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(10, 10, 180, 55);
+        
+        drawDotText(ctx, `SCORE:${score}`, 100, 30, 14, '#00ff00');
+        drawDotText(ctx, `STAGE:${stage}`, 100, 50, 14, '#00ffff');
+
+        animationRef.current = requestAnimationFrame(gameLoop);
+      };
+
+      gameLoop();
+
+      return () => {
+        if (animationRef.current) {
+          cancelAnimationFrame(animationRef.current);
+        }
+        if (startDelay) {
+          clearTimeout(startDelay);
+        }
+        stopBGM();
+      };
+    }
+  }, [gameState, enemies, score, stage]);
+
+  const handleKeyPress = (e) => {
+    if (gameState !== 'playing' || enemies.length === 0) return;
+
+    const key = e.key.toUpperCase();
+    
+    if (key.length === 1 && key.match(/[A-Z]/)) {
+      const enemy = enemies[0];
+      const expectedChar = enemy.word[enemy.typed.length];
+      
+      if (expectedChar === key) {
+        playTypeSound();
+        const newTyped = enemy.typed + key;
+        setScore(s => s + 10 * stage);
+        
+        if (newTyped === enemy.word) {
+          playDefeatSound();
+          const newDefeatedCount = defeatedCount + 1;
+          setDefeatedCount(newDefeatedCount);
+          setEnemies([]);
+          
+          if (newDefeatedCount >= 10) {
+            setStage(s => s + 1);
+            setDefeatedCount(0);
+            playStageUpSound();
+          }
+        } else {
+          setEnemies([{ ...enemy, typed: newTyped }]);
+        }
+      } else if (mode === 'hard') {
+        stopBGM();
+        playGameOverSound();
+        setMissedWord({ word: enemy.word, typed: enemy.typed, japanese: enemy.japanese });
+        setGameState('gameover');
+      }
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [gameState, enemies, mode, defeatedCount, stage]);
+
+  const startGame = (selectedMode) => {
+    playMenuSelectSound();
+    setTimeout(() => {
+      setMode(selectedMode);
+      setGameState('playing');
+      setScore(0);
+      setStage(1);
+      setDefeatedCount(0);
+      setEnemies([]);
+      gameTimeRef.current = 0;
+    }, 150);
+  };
+
+  const backToMenu = () => {
+    playMenuSelectSound();
+    setMissedWord(null);
+    setGameState('menu');
+  };
+
+  if (gameState === 'menu') {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-black text-white">
+        <div className="text-center space-y-8 p-8 border-4 border-cyan-500" style={{background: '#001a1a'}}>
+          <h1 className="text-5xl font-bold mb-8" style={{fontFamily: 'monospace', color: '#00ffff', textShadow: '4px 4px #004444'}}>
+            ■ TYPE FIGHTER ■
+          </h1>
+          <div className="space-y-4">
+            <button
+              onClick={() => startGame('normal')}
+              className="block w-80 mx-auto px-8 py-4 text-xl font-bold border-4 border-green-500 bg-green-900 hover:bg-green-700 transition-colors"
+              style={{fontFamily: 'monospace', textShadow: '2px 2px #000'}}
+            >
+              ► ノーマルモード
+            </button>
+            <button
+              onClick={() => startGame('hard')}
+              className="block w-80 mx-auto px-8 py-4 text-xl font-bold border-4 border-red-500 bg-red-900 hover:bg-red-700 transition-colors"
+              style={{fontFamily: 'monospace', textShadow: '2px 2px #000'}}
+            >
+              ► ハードモード
+            </button>
+          </div>
+          <div className="mt-8 text-sm text-cyan-400 max-w-md mx-auto border-2 border-cyan-800 p-4 bg-black" style={{fontFamily: 'monospace'}}>
+            <p>■ 遊び方 ■</p>
+            <p className="mt-2">文章をタイピングして撃墜</p>
+            <p>10機撃墜でステージアップ</p>
+            <p className="mt-3 text-green-400">ノーマル: ミスしてもOK</p>
+            <p className="text-red-400">ハード: ミスしたら即死</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (gameState === 'gameover') {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-black text-white">
+        <div className="text-center space-y-8 p-8 border-4 border-red-500" style={{background: '#1a0000'}}>
+          <h1 className="text-6xl font-bold mb-4" style={{fontFamily: 'monospace', color: '#ff0000', textShadow: '4px 4px #440000'}}>
+            ■ GAME OVER ■
+          </h1>
+          <p className="text-4xl mb-4" style={{fontFamily: 'monospace', color: '#00ffff', textShadow: '3px 3px #004444'}}>
+            SCORE: {score}
+          </p>
+          <p className="text-3xl mb-8" style={{fontFamily: 'monospace', color: '#ffff00'}}>
+            STAGE: {stage}
+          </p>
+          {missedWord && (
+            <div className="mb-8 p-4 border-2 border-red-500 bg-red-950">
+              <p className="text-xl mb-2" style={{fontFamily: 'monospace', color: '#ffff00'}}>
+                {missedWord.japanese}
+              </p>
+              <p className="text-2xl" style={{fontFamily: 'monospace'}}>
+                <span style={{color: '#00ff00'}}>{missedWord.typed}</span>
+                <span style={{color: '#ff0000'}}>{missedWord.word.substring(missedWord.typed.length)}</span>
+              </p>
+            </div>
+          )}
+          <button
+            onClick={backToMenu}
+            className="px-8 py-4 text-xl font-bold border-4 border-cyan-500 bg-cyan-900 hover:bg-cyan-700 transition-colors"
+            style={{fontFamily: 'monospace', textShadow: '2px 2px #000'}}
+          >
+            ► メニューに戻る
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gray-900">
+      <canvas
+        ref={canvasRef}
+        width={700}
+        height={700}
+        className="border-4 border-cyan-500"
+        style={{imageRendering: 'pixelated'}}
+      />
+    </div>
+  );
+};
+
+export default RetroTypingShooter;
     </script>
 </body>
 </html>
