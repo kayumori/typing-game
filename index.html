@@ -108,7 +108,7 @@ const RetroTypingShooter = () => {
     { text: 'お忙しいところすみません', romaji: 'OISOGASIITOKOROSUMIMASEN' },
     { text: 'お時間をいただきありがとうございます', romaji: 'OJIKANNWOITADAKIARIGATOUGOZAIMASU' },
     { text: 'ご都合はいかがですか', romaji: 'GOTUGOUHAIKAGADESUKA' },
-    { text: 'ご検討よろしくお願いします', romaji: 'GOKENTOUYOROSIKUONEGAISIMASU' },
+    { text: 'ご検討よろしくお願いします', romaji: 'GOKENNTOUYOROSIKUONEGAISIMASU' },
     { text: 'ご理解いただけますと幸いです', romaji: 'GORIKAIITADAKEMASUTOSAIWAIDESU' },
     { text: 'お返事お待ちしております', romaji: 'OHENNJIOMATISITEORIMASU' },
     { text: '取り急ぎご連絡まで', romaji: 'TORIISOGIGORENNRAKUMADE' }
@@ -304,7 +304,7 @@ const RetroTypingShooter = () => {
             japanese: sentence.text,
             x: canvas.width / 2,
             y: -30,
-            speed: 0.004 + stage * 0.003,
+            speed: 0.007 + stage * 0.003,
             typed: ''
           };
           setEnemies(prev => [...prev, newEnemy]);
