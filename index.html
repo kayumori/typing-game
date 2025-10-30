@@ -478,76 +478,101 @@ const RetroTypingShooter = () => {
     setGameState('menu');
   };
 
-  if (gameState === 'menu') {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-black text-white">
-        <div className="text-center space-y-8 p-8 border-4 border-cyan-500" style={{background: '#001a1a'}}>
-          <h1 className="text-5xl font-bold mb-8" style={{fontFamily: 'monospace', color: '#00ffff', textShadow: '4px 4px #004444'}}>
-            ■ TYPE FIGHTER ■
-          </h1>
-          <div className="space-y-4">
-            <button
-              onClick={() => startGame('normal')}
-              className="block w-80 mx-auto px-8 py-4 text-xl font-bold border-4 border-green-500 bg-green-900 hover:bg-green-700 transition-colors"
-              style={{fontFamily: 'monospace', textShadow: '2px 2px #000'}}
-            >
-              ► ノーマルモード
-            </button>
-            <button
-              onClick={() => startGame('hard')}
-              className="block w-80 mx-auto px-8 py-4 text-xl font-bold border-4 border-red-500 bg-red-900 hover:bg-red-700 transition-colors"
-              style={{fontFamily: 'monospace', textShadow: '2px 2px #000'}}
-            >
-              ► ハードモード
-            </button>
-          </div>
-          <div className="mt-8 text-sm text-cyan-400 max-w-md mx-auto border-2 border-cyan-800 p-4 bg-black" style={{fontFamily: 'monospace'}}>
-            <p>■ 遊び方 ■</p>
-            <p className="mt-2">文章をタイピングして撃墜</p>
-            <p>10機撃墜でステージアップ</p>
-            <p className="mt-3 text-green-400">ノーマル: ミスしてもOK</p>
-            <p className="text-red-400">ハード: ミスしたら即死</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+if (gameState === 'gameover') {
 
-  if (gameState === 'gameover') {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-black text-white">
-        <div className="text-center space-y-8 p-8 border-4 border-red-500" style={{background: '#1a0000'}}>
-          <h1 className="text-6xl font-bold mb-4" style={{fontFamily: 'monospace', color: '#ff0000', textShadow: '4px 4px #440000'}}>
-            ■ GAME OVER ■
-          </h1>
-          <p className="text-4xl mb-4" style={{fontFamily: 'monospace', color: '#00ffff', textShadow: '3px 3px #004444'}}>
-            SCORE: {score}
-          </p>
-          <p className="text-3xl mb-8" style={{fontFamily: 'monospace', color: '#ffff00'}}>
-            STAGE: {stage}
-          </p>
-          {missedWord && (
-            <div className="mb-8 p-4 border-2 border-red-500 bg-red-950">
-              <p className="text-xl mb-2" style={{fontFamily: 'monospace', color: '#ffff00'}}>
-                {missedWord.japanese}
-              </p>
-              <p className="text-2xl" style={{fontFamily: 'monospace'}}>
-                <span style={{color: '#00ff00'}}>{missedWord.typed}</span>
-                <span style={{color: '#ff0000'}}>{missedWord.word.substring(missedWord.typed.length)}</span>
-              </p>
-            </div>
-          )}
-          <button
-            onClick={backToMenu}
-            className="px-8 py-4 text-xl font-bold border-4 border-cyan-500 bg-cyan-900 hover:bg-cyan-700 transition-colors"
-            style={{fontFamily: 'monospace', textShadow: '2px 2px #000'}}
-          >
-            ► メニューに戻る
-          </button>
-        </div>
+  // コピー関数を追加
+  const copyResultToClipboard = async () => {
+    // 結果テキストを整形
+    const lines = [];
+    lines.push('■ TYPE FIGHTER ■ 結果');
+    lines.push(`SCORE: ${score}`);
+    lines.push(`STAGE: ${stage}`);
+
+    if (missedWord) {
+      // ミスした単語情報を詳細に
+      const typedLen = missedWord.typed ? missedWord.typed.length : 0;
+      const rest = missedWord.word ? missedWord.word.substring(typedLen) : '';
+      lines.push('MISS:');
+      lines.push(`  日本語: ${missedWord.japanese}`);
+      lines.push(`  英単語: ${missedWord.word}`);
+      lines.push(`  入力済み: ${missedWord.typed}`);
+      lines.push(`  未入力: ${rest}`);
+    }
+
+    const resultText = lines.join('\n');
+
+    try {
+      await navigator.clipboard.writeText(resultText);
+      alert('結果をクリップボードにコピーしました');
+    } catch (err) {
+      // フォールバック：選択→コピー誘導
+      console.error(err);
+      // 一時的に隠しテキストエリアを作成して選択コピー
+      const ta = document.createElement('textarea');
+      ta.value = resultText;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      ta.style.left = '-1000px';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        alert('結果をクリップボードにコピーしました');
+      } catch (err2) {
+        alert('コピーに失敗しました。手動で選択してコピーしてください。\n\n' + resultText);
+      } finally {
+        document.body.removeChild(ta);
+      }
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-black text-white">
+      <div className="text-center space-y-8 p-8 border-4 border-red-500" style={{background: '#1a0000'}}>
+        <h1 className="text-6xl font-bold mb-4" style={{fontFamily: 'monospace', color: '#ff0000', textShadow: '4px 4px #440000'}}>
+          ■ GAME OVER ■
+        </h1>
+
+        <p className="text-4xl mb-4" style={{fontFamily: 'monospace', color: '#00ffff', textShadow: '3px 3px #004444'}}>
+          SCORE: {score}
+        </p>
+
+        <p className="text-3xl mb-8" style={{fontFamily: 'monospace', color: '#ffff00'}}>
+          STAGE: {stage}
+        </p>
+
+        {/* 2) コピー用ボタンを追加（行 560 付近） */}
+        <button
+          onClick={copyResultToClipboard}
+          className="px-8 py-3 text-lg font-bold border-4 border-cyan-500 bg-cyan-900 hover:bg-cyan-700 transition-colors"
+          style={{fontFamily: 'monospace', textShadow: '2px 2px #000'}}
+        >
+          ► 結果をコピー
+        </button>
+
+        {missedWord && (
+          <div className="mb-8 p-4 border-2 border-red-500 bg-red-950">
+            <p className="text-xl mb-2" style={{fontFamily: 'monospace', color: '#ffff00'}}>
+              {missedWord.japanese}
+            </p>
+            <p className="text-2xl" style={{fontFamily: 'monospace'}}>
+              <span style={{color: '#00ff00'}}>{missedWord.typed}</span>
+              <span style={{color: '#ff0000'}}>{missedWord.word.substring(missedWord.typed.length)}</span>
+            </p>
+          </div>
+        )}
+
+        <button
+          onClick={backToMenu}
+          className="px-8 py-4 text-xl font-bold border-4 border-cyan-500 bg-cyan-900 hover:bg-cyan-700 transition-colors"
+          style={{fontFamily: 'monospace', textShadow: '2px 2px #000'}}
+        >
+          ► メニューに戻る
+        </button>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-900">
